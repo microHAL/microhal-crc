@@ -24,6 +24,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsign-conversion")
 add_subdirectory(lib)
 add_subdirectory(tests/unitTests)
 add_subdirectory(tests/performance)
-#add_subdirectory(tests/multiplatformPerformance)
+add_subdirectory(tests/multiplatformPerformance)
 
 

@@ -10,6 +10,7 @@ FetchContent_MakeAvailable(doctest)
 set(SRCS
     main.cpp
     test_predefinedCrc.cpp
+    test_partialCrcComputation.cpp
     test_crcUsedInSdCard.cpp
     test_tableGeneration.cpp
     )

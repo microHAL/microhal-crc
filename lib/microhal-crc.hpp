@@ -199,7 +199,7 @@ class CRCImpl<Implementation::BitShiftLsb, ChecksumType, polynomial, len, reflec
     static_assert(sizeof(ChecksumType) * 8 >= len);
 
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
-        ChecksumType remainder = detail::reverseBits(init);
+        ChecksumType remainder = init;
         if constexpr (reflectIn) {
             for (size_t byte = 0; byte < lne; byte++) {
                 remainder = calculateByte(data[byte] ^ remainder);
@@ -287,7 +287,7 @@ class CRCImpl<Implementation::Table256Lsb, ChecksumType, polynomial, len, reflec
             return index;
         };
 
-        ChecksumType result = detail::reverseBits(init);
+        ChecksumType result = init;
         for (size_t byte = 0; byte < lne; byte++) {
             result = (result >> 8) ^ crc_table[tableIndex(result, data[byte])];
         }
@@ -313,18 +313,31 @@ class CRC : public CRCImpl<implementation, ChecksumType, poly, len,
  public:
     static constexpr ChecksumType polynomial() { return poly; }
     static constexpr size_t polynomialLength() { return len; }
-    static constexpr ChecksumType initialValue() { return initial; }
+    static constexpr ChecksumType initialValue([[maybe_unused]] bool reverseIfRequired) {
+        if constexpr (isMsbImplementation()) {
+            return initial;
+        } else {
+            if (reverseIfRequired) {
+                return detail::reverseBits(initial);
+            } else {
+                return initial;
+            }
+        }
+    }
     static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
     static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
 
-    static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
-        ChecksumType remainder = CRC::calculatePartial(initialValue(), data, lne);
-
+    static constexpr ChecksumType finalize(ChecksumType remainder) {
         if constexpr (outputReflected() == isMsbImplementation()) {
             remainder = detail::reverseBits(remainder) >> ShiftToAlign8Bit;
         }
 
         return remainder ^ xorOut;
+    }
+
+    static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
+        ChecksumType remainder = CRC::calculatePartial(initialValue(true), data, lne);
+        return finalize(remainder);
     }
 
  private:

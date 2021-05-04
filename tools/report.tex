@@ -1,0 +1,76 @@
+\documentclass[12pt]{standalone} % the standalone environment is used to display the pictures.
+\usepackage{pgfplots} % package used to implement the plot
+\usepackage{pgfplotstable}
+\pgfplotsset{width=15.5cm, compat=1.6}
+
+
+\makeatletter
+\pgfplotsset{
+    /pgfplots/flexible xticklabels from table/.code n args={3}{%
+        \pgfplotstableread[#3]{#1}\coordinate@table
+        \pgfplotstablegetcolumn{#2}\of{\coordinate@table}\to\pgfplots@xticklabels
+        \let\pgfplots@xticklabel=\pgfplots@user@ticklabel@list@x
+    }
+}
+\makeatother
+
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}
+[
+    ybar=0pt, % ybar command displays the graph in horizontal form, while the xbar command displays the graph in vertical form.
+    enlargelimits=0.15,% these limits are used to shrink or expand the graph. The lesser the limit, the higher the graph will expand or grow. The greater the limit, the more graph will shrink.
+      % here, north is the position of the bottom legend row. You can specify the east, west, or south direction to shift the location.
+    ylabel={Execution time}, % there should be no line gap between the rows here. Otherwise, latex will show an error.
+    flexible xticklabels from table={data.csv}{implementation}{col sep=comma},
+    xticklabel style={text height=1.5ex},
+    xtick=data,
+    % and position the legend outside of the plot to not overlap with the data
+    legend pos=outer north east,
+    % add `nodes near coords'
+        nodes near coords={
+            % because internally PGFPlots works with floating point numbers, we
+            % change them to fixed point numbers
+            \pgfkeys{
+                /pgf/fpu=true,
+                /pgf/fpu/output format=fixed,
+            }%
+            % check if numbers are greater than 1000 and if so, divide them by
+            % 1000 to convert them from ms to s scale
+            \pgfmathparse{
+                ifthenelse(
+                    \pgfplotspointmeta < 1000,
+                    \pgfplotspointmeta,
+                    \pgfplotspointmeta/1000
+                )
+            }%
+            % to now decide which of the two cases we have, we compare the
+            % point meta value, but because `\ifnum' compares integers, we first
+            % have to convert the fixed number to an integer
+                \pgfmathtruncatemacro{\Y}{\pgfplotspointmeta}%
+            \ifnum\Y<1000
+                \pgfmathprintnumber{\pgfmathresult}\,ms
+            \else
+                \pgfmathprintnumber{\pgfmathresult}\,s
+            \fi
+        },
+        % set the style of the `nodes near coords'
+        nodes near coords style={
+            font=\tiny,
+            rotate=90,
+            anchor=west,
+        },
+         % as basis for the `nodes near coords' use the raw y values
+        point meta=rawy
+    ]
+\addplot table[x expr=\coordindex,y=CRC8_CCITT,col sep=comma] {data.csv};
+\addplot table[x expr=\coordindex,y=CRC8_DARC,col sep=comma] {data.csv};
+\addplot table[x expr=\coordindex,y=CRC16_CCITT,col sep=comma] {data.csv};
+\addplot table[x expr=\coordindex,y=CRC16_ARC,col sep=comma] {data.csv};
+\addplot table[x expr=\coordindex,y=CRC32,col sep=comma] {data.csv};
+\addplot table[x expr=\coordindex,y=CRC32C,col sep=comma] {data.csv};
+\legend{CRC8\_CCITT, CRC8\_DARC Reflected, CRC16\_CCITT, CRC16\_ARC Reflected, CRC32, CRC32C Reflected}
+
+\end{axis}
+\end{tikzpicture}
+\end{document}

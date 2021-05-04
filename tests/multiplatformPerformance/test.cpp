@@ -57,6 +57,7 @@ template <template <Implementation> class CRC>
 json crcTest() {
     json test;
     test["CRC"]["poly"] = CRC<Implementation::BitShift>::poly();
+    test["CRC"]["polyLength"] = CRC<Implementation::BitShift>::polyLength();
     test["CRC"]["inputReflected"] = CRC<Implementation::BitShift>::inputReflected();
     test["CRC"]["outputReflected"] = CRC<Implementation::BitShift>::outputReflected();
     test["CRC"]["initialValue"] = CRC<Implementation::BitShift>::initialValue();

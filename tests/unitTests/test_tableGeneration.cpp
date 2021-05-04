@@ -32,6 +32,8 @@
 #include "doctest/doctest.h"
 #include "microhal-crc.hpp"
 
+using namespace microhal;
+
 constexpr auto implementation = Implementation::BitShift;
 
 TEST_CASE("Table 256 element generation for CRC16 CCITT") {
@@ -56,7 +58,7 @@ TEST_CASE("Table 256 element generation for CRC16 CCITT") {
     auto table = detail::tableGeneratorMSB<uint16_t>(0x1021, 16);
     if (crcTable != table) {
         for (size_t i = 0; i < 256; i++) {
-            std::cout << std::hex << (uint32_t)table[i] << "\t" << (uint32_t)crcTable[i] << " " << endl;
+            std::cout << std::hex << (uint32_t)table[i] << "\t" << (uint32_t)crcTable[i] << " " << std::endl;
         }
     }
     CHECK(crcTable == table);
@@ -84,7 +86,7 @@ TEST_CASE("Table 256 Reflected element generation for CRC16 CCITT") {
     auto table = detail::tableGeneratorLSB<uint16_t>(0x8408, 16);
     if (crcTable != table) {
         for (size_t i = 0; i < 256; i++) {
-            std::cout << std::hex << (uint32_t)table[i] << "\t" << (uint32_t)crcTable[i] << " " << endl;
+            std::cout << std::hex << (uint32_t)table[i] << "\t" << (uint32_t)crcTable[i] << " " << std::endl;
         }
     }
     CHECK(crcTable == table);

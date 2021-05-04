@@ -29,6 +29,8 @@
 #include "doctest/doctest.h"
 #include "microhal-crc.hpp"
 
+using namespace microhal;
+
 constexpr auto implementation = Implementation::CRC_IMPLEMENTATION;
 
 // 0102030405060708090a0b0c0d0e0faabbccddeeff

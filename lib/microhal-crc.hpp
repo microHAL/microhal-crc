@@ -32,7 +32,9 @@
 #include <array>
 #include <cstdint>
 
-using namespace std;
+#undef CRC
+
+namespace microhal {
 
 namespace detail {
 template <typename ChecksumType>
@@ -524,5 +526,7 @@ using CRC32_JAMCRC =
 
 template <Implementation impl = Implementation::Table256>
 using CRC32_XFER = CRC<impl, uint32_t, 0x000000AF, 32, 0x00000000, 0x00000000>;
+
+}  // namespace microhal
 
 #endif /* _MICROHAL_CRC_H_ */

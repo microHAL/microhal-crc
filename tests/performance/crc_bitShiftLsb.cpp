@@ -31,6 +31,8 @@
 
 #include "microhal-crc.hpp"
 
+using namespace microhal;
+
 #ifndef CRC_TYPE
 #error CRC_TYPE have to be defined, ie.: CRC7 or CRC16_CCITT
 #endif

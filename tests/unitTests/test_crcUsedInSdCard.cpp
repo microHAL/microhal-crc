@@ -29,6 +29,8 @@
 #include "doctest/doctest.h"
 #include "microhal-crc.hpp"
 
+using namespace microhal;
+
 constexpr auto implementation = Implementation::CRC_IMPLEMENTATION;
 
 TEST_CASE("CRC7 'x^7 + X^3 + 1' used in SD Card") {

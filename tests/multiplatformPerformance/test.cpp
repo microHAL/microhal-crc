@@ -33,8 +33,8 @@
 #include <nlohmann/json.hpp>
 
 #ifdef EMBEDDED_TARGET
-#include "microhal.h"
 #include "bsp/nucleo-f411re/bsp.h"
+#include "microhal.h"
 #undef CRC
 #endif
 
@@ -56,8 +56,8 @@ std::chrono::nanoseconds crcRuntimeTest() {
 template <template <Implementation> class CRC>
 json crcTest() {
     json test;
-    test["CRC"]["poly"] = CRC<Implementation::BitShift>::poly();
-    test["CRC"]["polyLength"] = CRC<Implementation::BitShift>::polyLength();
+    test["CRC"]["poly"] = CRC<Implementation::BitShift>::polynomial();
+    test["CRC"]["polyLength"] = CRC<Implementation::BitShift>::polynomialLength();
     test["CRC"]["inputReflected"] = CRC<Implementation::BitShift>::inputReflected();
     test["CRC"]["outputReflected"] = CRC<Implementation::BitShift>::outputReflected();
     test["CRC"]["initialValue"] = CRC<Implementation::BitShift>::initialValue();
@@ -69,7 +69,7 @@ json crcTest() {
     return test;
 }
 
-int main() {  
+int main() {
     message.fill(0xAA);
 
     json testResult;

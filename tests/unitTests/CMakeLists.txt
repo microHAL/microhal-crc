@@ -30,8 +30,8 @@ add_executable(unitTests_table256Lsb ${SRCS})
 target_link_libraries(unitTests_table256Lsb microhal-crc doctest)
 target_compile_definitions(unitTests_table256Lsb PRIVATE CRC_IMPLEMENTATION=Table256Lsb)
 
-add_test(NAME unitTests_bitShiftMsb COMMAND correctnesTest)
-add_test(NAME unitTests_bitShiftLsb COMMAND correctnesTest_bitShiftLsb)
-add_test(NAME unitTests_table256Msb COMMAND correctnesTest_table256)
-add_test(NAME unitTests_table256Lsb COMMAND correctnesTest_table256)
+add_test(NAME unitTests_bitShiftMsb COMMAND unitTests_bitShiftMsb)
+add_test(NAME unitTests_bitShiftLsb COMMAND unitTests_bitShiftLsb)
+add_test(NAME unitTests_table256Msb COMMAND unitTests_table256Msb)
+add_test(NAME unitTests_table256Lsb COMMAND unitTests_table256Lsb)
 

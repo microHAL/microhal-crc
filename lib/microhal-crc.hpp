@@ -154,6 +154,7 @@ class CRC<Implementation::BitShift, ChecksumType, polynomial, len, initial, xorO
 
     static constexpr ChecksumType initialValue() { return initial; }
     static constexpr ChecksumType poly() { return polynomial; }
+    static constexpr ChecksumType polyLength() { return len; }
     static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
     static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
 

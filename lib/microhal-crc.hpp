@@ -72,7 +72,7 @@ constexpr uint32_t reverseBits(uint32_t x) {
 }
 
 template <typename T>
-constexpr std::array<T, 256> tableGeneratorMSB(T polynomial, size_t polynomialLen, bool reflect) {
+constexpr std::array<T, 256> tableGeneratorMSB(T polynomial, size_t polynomialLen) {
     // This function is always run at compile time so we don't need to do
     // run time optimization
     const size_t shiftToAlign8Bit = ((sizeof(T) * 8 - polynomialLen) % 8);
@@ -81,7 +81,6 @@ constexpr std::array<T, 256> tableGeneratorMSB(T polynomial, size_t polynomialLe
     size_t i = 1;
     do {
         T crc = i;
-        if (reflect) crc = reverseBits(uint8_t(i));
 
         for (size_t bit = polynomialLen + shiftToAlign8Bit; bit > 0; --bit) {
             if (crc & polinomialMsbBitSet) {
@@ -139,28 +138,20 @@ constexpr Properties operator&(Properties a, Properties b) {
     return static_cast<Properties>(static_cast<uint_fast8_t>(a) & static_cast<uint_fast8_t>(b));
 }
 
-template <Implementation impl, typename ChecksumType = uint8_t, ChecksumType polynomial = 0, size_t len = 0,
-          ChecksumType init = 0, ChecksumType xorOut = 0, Properties prop = Properties::None>
-class CRC;
+template <Implementation impl, typename ChecksumType, ChecksumType polynomial, size_t len, bool reflectIn>
+class CRCImpl;
 
 //------------------------------------------------------------------------------
 //            Bit shift implementation (slow but low footprint)
 //------------------------------------------------------------------------------
-template <typename ChecksumType, ChecksumType polynomial, size_t len, ChecksumType initial, ChecksumType xorOut,
-          Properties properties>
-class CRC<Implementation::BitShift, ChecksumType, polynomial, len, initial, xorOut, properties> {
+template <typename ChecksumType, ChecksumType polynomial, size_t len, bool reflectIn>
+class CRCImpl<Implementation::BitShift, ChecksumType, polynomial, len, reflectIn> {
  public:
     static_assert(sizeof(ChecksumType) * 8 >= len);
 
-    static constexpr ChecksumType initialValue() { return initial; }
-    static constexpr ChecksumType poly() { return polynomial; }
-    static constexpr ChecksumType polyLength() { return len; }
-    static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
-    static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
-
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
         ChecksumType remainder = init;
-        if constexpr ((properties & Properties::ReflectIn) == Properties::ReflectIn) {
+        if constexpr (reflectIn) {
             for (size_t byte = 0; byte < lne; byte++) {
                 if constexpr (len <= 8) {
                     remainder = calculateByte(detail::reverseBits(data[byte]) ^ remainder);
@@ -180,15 +171,6 @@ class CRC<Implementation::BitShift, ChecksumType, polynomial, len, initial, xorO
             }
         }
         return remainder >> ShiftToAlign8Bit;
-    }
-
-    static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
-        ChecksumType remainder = calculatePartial(initialValue(), data, lne);
-
-        if constexpr ((properties & Properties::ReflectOut) == Properties::ReflectOut) {
-            remainder = detail::reverseBits(remainder);
-        }
-        return remainder ^ xorOut;
     }
 
  private:
@@ -211,20 +193,14 @@ class CRC<Implementation::BitShift, ChecksumType, polynomial, len, initial, xorO
     };
 };
 
-template <typename ChecksumType, ChecksumType polynomial, size_t len, ChecksumType initial, ChecksumType xorOut,
-          Properties properties>
-class CRC<Implementation::BitShiftLsb, ChecksumType, polynomial, len, initial, xorOut, properties> {
+template <typename ChecksumType, ChecksumType polynomial, size_t len, bool reflectIn>
+class CRCImpl<Implementation::BitShiftLsb, ChecksumType, polynomial, len, reflectIn> {
  public:
     static_assert(sizeof(ChecksumType) * 8 >= len);
 
-    static constexpr ChecksumType initialValue() { return initial; }
-    static constexpr ChecksumType poly() { return polynomial; }
-    static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
-    static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
-
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
         ChecksumType remainder = detail::reverseBits(init);
-        if constexpr (inputReflected()) {
+        if constexpr (reflectIn) {
             for (size_t byte = 0; byte < lne; byte++) {
                 remainder = calculateByte(data[byte] ^ remainder);
             }
@@ -234,15 +210,6 @@ class CRC<Implementation::BitShiftLsb, ChecksumType, polynomial, len, initial, x
             }
         }
         return remainder;
-    }
-
-    static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
-        ChecksumType remainder = calculatePartial(initialValue(), data, lne);
-
-        if constexpr (!outputReflected()) {
-            remainder = detail::reverseBits(remainder) >> ShiftToAlign8Bit;
-        }
-        return remainder ^ xorOut;
     }
 
  private:
@@ -267,21 +234,15 @@ class CRC<Implementation::BitShiftLsb, ChecksumType, polynomial, len, initial, x
 //------------------------------------------------------------------------------
 //      Table with 256 elements implementation (fast but high footprint)
 //------------------------------------------------------------------------------
-template <typename ChecksumType, ChecksumType polynomial, size_t len, ChecksumType initial, ChecksumType xorOut,
-          Properties properties>
-class CRC<Implementation::Table256, ChecksumType, polynomial, len, initial, xorOut, properties> {
- public:
+template <typename ChecksumType, ChecksumType polynomial, size_t len, bool reflectIn>
+class CRCImpl<Implementation::Table256, ChecksumType, polynomial, len, reflectIn> {
     static_assert(sizeof(ChecksumType) * 8 >= len);
-    constexpr static auto crc_table = detail::tableGeneratorMSB(polynomial, len, false);
+    constexpr static auto crc_table = detail::tableGeneratorMSB(polynomial, len);
 
-    static constexpr ChecksumType initialValue() { return initial; }
-    static constexpr ChecksumType poly() { return polynomial; }
-    static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
-    static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
-
+ public:
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
         auto tableIndex = [](ChecksumType remainder, uint8_t newData) {
-            if constexpr (inputReflected()) {
+            if constexpr (reflectIn) {
                 newData = detail::reverseBits(newData);
             }
             if constexpr (len <= 8) {
@@ -301,14 +262,6 @@ class CRC<Implementation::Table256, ChecksumType, polynomial, len, initial, xorO
         return result >> ShiftToAlign8Bit;
     }
 
-    static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
-        ChecksumType remainder = calculatePartial(initialValue(), data, lne);
-        if constexpr (outputReflected()) {
-            remainder = detail::reverseBits(remainder);
-        }
-        return remainder ^ xorOut;
-    }
-
  private:
     enum : ChecksumType {
         Mask = detail::maskGen<ChecksumType>(len),
@@ -318,21 +271,16 @@ class CRC<Implementation::Table256, ChecksumType, polynomial, len, initial, xorO
 //------------------------------------------------------------------------------
 //      Table with 256 elements implementation (fast but high footprint)
 //------------------------------------------------------------------------------
-template <typename ChecksumType, ChecksumType polynomial, size_t len, ChecksumType initial, ChecksumType xorOut,
-          Properties properties>
-class CRC<Implementation::Table256Lsb, ChecksumType, polynomial, len, initial, xorOut, properties> {
- public:
+template <typename ChecksumType, ChecksumType polynomial, size_t len, bool reflectIn>
+class CRCImpl<Implementation::Table256Lsb, ChecksumType, polynomial, len, reflectIn> {
     static_assert(sizeof(ChecksumType) * 8 >= len);
     constexpr static auto crc_table = detail::tableGeneratorLSB(
         detail::reverseBits(ChecksumType(polynomial << ((sizeof(ChecksumType) * 8 - len) % 8))), len);
 
-    static constexpr ChecksumType initialValue() { return initial; }
-    static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
-    static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
-
+ public:
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
         auto tableIndex = [](ChecksumType remainder, uint8_t newData) {
-            if constexpr (!inputReflected()) {
+            if constexpr (!reflectIn) {
                 newData = detail::reverseBits(newData);
             }
             const uint_fast8_t index = newData ^ (remainder & 0xFFU);
@@ -347,11 +295,35 @@ class CRC<Implementation::Table256Lsb, ChecksumType, polynomial, len, initial, x
         return result;
     }
 
+ private:
+    enum : ChecksumType {
+        Mask = detail::maskGen<ChecksumType>(len),
+        ShiftToAlign8Bit = ((sizeof(ChecksumType) * 8 - len) % 8),
+    };
+};
+
+template <Implementation implementation, typename ChecksumType, ChecksumType poly, size_t len, ChecksumType initial = 0,
+          ChecksumType xorOut = 0, Properties properties = Properties::None>
+class CRC : public CRCImpl<implementation, ChecksumType, poly, len,
+                           (properties & Properties::ReflectIn) == Properties::ReflectIn> {
+    static constexpr bool isMsbImplementation() {
+        return implementation == Implementation::BitShift || implementation == Implementation::Table256;
+    }
+
+ public:
+    static constexpr ChecksumType polynomial() { return poly; }
+    static constexpr size_t polynomialLength() { return len; }
+    static constexpr ChecksumType initialValue() { return initial; }
+    static constexpr bool inputReflected() { return (properties & Properties::ReflectIn) == Properties::ReflectIn; }
+    static constexpr bool outputReflected() { return (properties & Properties::ReflectOut) == Properties::ReflectOut; }
+
     static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
-        ChecksumType remainder = calculatePartial(initialValue(), data, lne);
-        if constexpr (!outputReflected()) {
+        ChecksumType remainder = CRC::calculatePartial(initialValue(), data, lne);
+
+        if constexpr (outputReflected() == isMsbImplementation()) {
             remainder = detail::reverseBits(remainder) >> ShiftToAlign8Bit;
         }
+
         return remainder ^ xorOut;
     }
 
@@ -506,7 +478,7 @@ template <Implementation impl = Implementation::Table256>
 using CRC17_CAN = CRC<impl, uint32_t, 0x1685B, 17>;
 
 template <Implementation impl = Implementation::Table256>
-using CRC21_CAN = CRC<impl, uint32_t, 0x102899>;
+using CRC21_CAN = CRC<impl, uint32_t, 0x102899, 21>;
 //------------------------------------------------------------------------------
 //                                 CRC-32
 //------------------------------------------------------------------------------

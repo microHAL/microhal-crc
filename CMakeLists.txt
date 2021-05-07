@@ -2,13 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 PROJECT(microhal-CRC)
 enable_testing()
 
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++2a" COMPILER_SUPPORTS_CXX11)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
-else()
-    message(SEND_ERROR "The compiler ${CMAKE_CXX_COMPILER} doesnt support C++20.") 
-endif()
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

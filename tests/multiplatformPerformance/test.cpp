@@ -62,7 +62,7 @@ json crcTest() {
     test["CRC"]["polyLength"] = CRC<Implementation::BitShift>::polynomialLength();
     test["CRC"]["inputReflected"] = CRC<Implementation::BitShift>::inputReflected();
     test["CRC"]["outputReflected"] = CRC<Implementation::BitShift>::outputReflected();
-    test["CRC"]["initialValue"] = CRC<Implementation::BitShift>::initialValue(false);
+    test["CRC"]["initialValue"] = CRC<Implementation::BitShift>::initialValue();
 
     test["implementation"]["BitShift"] = crcRuntimeTest<CRC<Implementation::BitShift>>().count();
     test["implementation"]["BitShiftLsb"] = crcRuntimeTest<CRC<Implementation::BitShiftLsb>>().count();

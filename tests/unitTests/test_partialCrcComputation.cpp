@@ -41,7 +41,7 @@ TEST_CASE("CRC8 Partial computation") {
     {
         INFO("Checking CRC8_CCITT");
         auto part1Crc =
-            CRC8_CCITT<implementation>::calculatePartial(CRC8_CCITT<implementation>::initialValue(true), testdataPart1.data(), testdataPart1.size());
+            CRC8_CCITT<implementation>::calculatePartial(CRC8_CCITT<implementation>::initialize(), testdataPart1.data(), testdataPart1.size());
         auto part2Crc = CRC8_CCITT<implementation>::calculatePartial(part1Crc, testdataPart2.data(), testdataPart2.size());
         auto result = CRC8_CCITT<implementation>::finalize(part2Crc);
         CHECK(result == 0x71);
@@ -51,8 +51,8 @@ TEST_CASE("CRC8 Partial computation") {
 TEST_CASE("CRC16 Partial computation") {
     {
         INFO("Checking CRC16_CCITT");
-        auto part1Crc = CRC16_CCITT<implementation>::calculatePartial(CRC16_CCITT<implementation>::initialValue(true), testdataPart1.data(),
-                                                                      testdataPart1.size());
+        auto part1Crc =
+            CRC16_CCITT<implementation>::calculatePartial(CRC16_CCITT<implementation>::initialize(), testdataPart1.data(), testdataPart1.size());
         auto part2Crc = CRC16_CCITT<implementation>::calculatePartial(part1Crc, testdataPart2.data(), testdataPart2.size());
         auto result = CRC16_CCITT<implementation>::finalize(part2Crc);
         CHECK(result == 0x7C8C);
@@ -60,7 +60,7 @@ TEST_CASE("CRC16 Partial computation") {
     {
         INFO("Checking CRC16_ARC");
         auto part1Crc =
-            CRC16_ARC<implementation>::calculatePartial(CRC16_ARC<implementation>::initialValue(true), testdataPart1.data(), testdataPart1.size());
+            CRC16_ARC<implementation>::calculatePartial(CRC16_ARC<implementation>::initialize(), testdataPart1.data(), testdataPart1.size());
         auto part2Crc = CRC16_ARC<implementation>::calculatePartial(part1Crc, testdataPart2.data(), testdataPart2.size());
         auto result = CRC16_ARC<implementation>::finalize(part2Crc);
         CHECK(result == 0x322A);

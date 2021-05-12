@@ -55,7 +55,7 @@ TEST_CASE("Table 256 element generation for CRC16 CCITT") {
         0xFD2E, 0xED0F, 0xDD6C, 0xCD4D, 0xBDAA, 0xAD8B, 0x9DE8, 0x8DC9, 0x7C26, 0x6C07, 0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1,
         0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0};
 
-    auto table = detail::tableGeneratorMSB<uint16_t>(0x1021, 16);
+    auto table = crcDetail::tableGeneratorMSB<uint16_t>(0x1021, 16);
     if (crcTable != table) {
         for (size_t i = 0; i < 256; i++) {
             std::cout << std::hex << (uint32_t)table[i] << "\t" << (uint32_t)crcTable[i] << " " << std::endl;
@@ -83,7 +83,7 @@ TEST_CASE("Table 256 Reflected element generation for CRC16 CCITT") {
         0xE70E, 0xF687, 0xC41C, 0xD595, 0xA12A, 0xB0A3, 0x8238, 0x93B1, 0x6B46, 0x7ACF, 0x4854, 0x59DD, 0x2D62, 0x3CEB, 0x0E70, 0x1FF9,
         0xF78F, 0xE606, 0xD49D, 0xC514, 0xB1AB, 0xA022, 0x92B9, 0x8330, 0x7BC7, 0x6A4E, 0x58D5, 0x495C, 0x3DE3, 0x2C6A, 0x1EF1, 0x0F78};
 
-    auto table = detail::tableGeneratorLSB<uint16_t>(0x8408, 16);
+    auto table = crcDetail::tableGeneratorLSB<uint16_t>(0x8408, 16);
     if (crcTable != table) {
         for (size_t i = 0; i < 256; i++) {
             std::cout << std::hex << (uint32_t)table[i] << "\t" << (uint32_t)crcTable[i] << " " << std::endl;

@@ -13,113 +13,113 @@ using namespace microhal;
 constexpr auto implementation = Implementation::CRC_IMPLEMENTATION;
 
 TEST_CASE("Test String Polinomial decode") {
-    static_assert(detail::atoi("95") == 95);
-    static_assert(detail::atoi("5") == 5);
-    static_assert(detail::atoi("195") == 195);
+    static_assert(crcDetail::atoi("95") == 95);
+    static_assert(crcDetail::atoi("5") == 5);
+    static_assert(crcDetail::atoi("195") == 195);
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^2");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^2");
         static_assert(coef == 2);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x ^ 2");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x ^ 2");
         static_assert(coef == 2);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("  x ^ 2   ");
+        constexpr auto coef = crcDetail::decodeCoeffitient("  x ^ 2   ");
         static_assert(coef == 2);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("  x    ^    2   ");
+        constexpr auto coef = crcDetail::decodeCoeffitient("  x    ^    2   ");
         static_assert(coef == 2);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("  x^    2   ");
+        constexpr auto coef = crcDetail::decodeCoeffitient("  x^    2   ");
         static_assert(coef == 2);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("  x    ^2   ");
+        constexpr auto coef = crcDetail::decodeCoeffitient("  x    ^2   ");
         static_assert(coef == 2);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^0");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^0");
         static_assert(coef == 0);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^1");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^1");
         static_assert(coef == 1);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^10");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^10");
         static_assert(coef == 10);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^123");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^123");
         static_assert(coef == 123);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("1");
+        constexpr auto coef = crcDetail::decodeCoeffitient("1");
         static_assert(coef == 0);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^1 2 3");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^1 2 3");
         static_assert(coef == -1);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("^1");
+        constexpr auto coef = crcDetail::decodeCoeffitient("^1");
         static_assert(coef == -1);
     }
 
     {
-        constexpr auto coef = detail::decodeCoeffitient("x^       ");
+        constexpr auto coef = crcDetail::decodeCoeffitient("x^       ");
         static_assert(coef == -1);
     }
 
     //--------------------------------------------------------------------------
     {
-        constexpr std::pair<uint64_t, size_t> a = detail::stringToPoly("x^2");
+        constexpr std::pair<uint64_t, size_t> a = crcDetail::stringToPoly("x^2");
         static_assert(a.first == 0b0);
         static_assert(a.second == 2);
     }
 
     {
-        constexpr std::pair<uint64_t, size_t> a = detail::stringToPoly("x^2+x^1");
+        constexpr std::pair<uint64_t, size_t> a = crcDetail::stringToPoly("x^2+x^1");
         static_assert(a.first == 0b10);
         static_assert(a.second == 2);
     }
 
     {
-        constexpr std::pair<uint64_t, size_t> a = detail::stringToPoly("x^16+x^1");
+        constexpr std::pair<uint64_t, size_t> a = crcDetail::stringToPoly("x^16+x^1");
         static_assert(a.first == 0b10);
         static_assert(a.second == 16);
     }
 
     {
-        constexpr std::pair<uint64_t, size_t> a = detail::stringToPoly("x^16+x^1+1");
+        constexpr std::pair<uint64_t, size_t> a = crcDetail::stringToPoly("x^16+x^1+1");
         static_assert(a.first == 0b11);
         static_assert(a.second == 16);
     }
 
     {
-        constexpr std::pair<uint64_t, size_t> a = detail::stringToPoly("x^16+x^12+x^5+1");
+        constexpr std::pair<uint64_t, size_t> a = crcDetail::stringToPoly("x^16+x^12+x^5+1");
         static_assert(a.first == 0b1'0000'0010'0001);
         static_assert(a.second == 16);
     }
 
     {
-        constexpr std::pair<uint64_t, size_t> a = detail::stringToPoly("x^16+x^12+x^5+x^0");
+        constexpr std::pair<uint64_t, size_t> a = crcDetail::stringToPoly("x^16+x^12+x^5+x^0");
         static_assert(a.first == 0b1'0000'0010'0001);
         static_assert(a.second == 16);
     }

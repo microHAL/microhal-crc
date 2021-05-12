@@ -39,7 +39,7 @@
 
 namespace microhal {
 
-namespace detail {
+namespace crcDetail {
 template <typename ChecksumType>
 static constexpr ChecksumType maskGen(size_t len) {
     ChecksumType mask = 1;
@@ -232,9 +232,9 @@ class CRCImpl<Implementation::BitShift, ChecksumType, polynomial, len, reflectIn
         if constexpr (reflectIn) {
             for (size_t byte = 0; byte < lne; byte++) {
                 if constexpr (len <= 8) {
-                    remainder = calculateByte(detail::reverseBits(data[byte]) ^ remainder);
+                    remainder = calculateByte(crcDetail::reverseBits(data[byte]) ^ remainder);
                 } else {
-                    ChecksumType reversedData = ChecksumType(detail::reverseBits(data[byte])) << (len - 8);
+                    ChecksumType reversedData = ChecksumType(crcDetail::reverseBits(data[byte])) << (len - 8);
                     remainder = calculateByte(reversedData ^ remainder);
                 }
             }
@@ -264,7 +264,7 @@ class CRCImpl<Implementation::BitShift, ChecksumType, polynomial, len, reflectIn
     }
 
     enum : ChecksumType {
-        Mask = detail::maskGen<ChecksumType>(len),
+        Mask = crcDetail::maskGen<ChecksumType>(len),
         ShiftToAlign8Bit = ((sizeof(ChecksumType) * 8 - len) % 8),
         Polynomial = polynomial << ShiftToAlign8Bit,
         MSBBitSet = 1U << (len - 1 + ShiftToAlign8Bit)
@@ -284,7 +284,7 @@ class CRCImpl<Implementation::BitShiftLsb, ChecksumType, polynomial, len, reflec
             }
         } else {
             for (size_t byte = 0; byte < lne; byte++) {
-                remainder = calculateByte(detail::reverseBits(data[byte]) ^ remainder);
+                remainder = calculateByte(crcDetail::reverseBits(data[byte]) ^ remainder);
             }
         }
         return remainder;
@@ -303,9 +303,9 @@ class CRCImpl<Implementation::BitShiftLsb, ChecksumType, polynomial, len, reflec
     }
 
     enum : ChecksumType {
-        Mask = detail::maskGen<ChecksumType>(len),
+        Mask = crcDetail::maskGen<ChecksumType>(len),
         ShiftToAlign8Bit = ((sizeof(ChecksumType) * 8 - len) % 8),
-        Polynomial = detail::reverseBits(ChecksumType(polynomial << ShiftToAlign8Bit)),
+        Polynomial = crcDetail::reverseBits(ChecksumType(polynomial << ShiftToAlign8Bit)),
     };
 };
 
@@ -316,13 +316,13 @@ template <typename ChecksumType, ChecksumType polynomial, size_t len, bool refle
 class CRCImpl<Implementation::Table256, ChecksumType, polynomial, len, reflectIn> {
     static_assert(std::numeric_limits<ChecksumType>::digits >= len);
 
-    constexpr static auto crc_table = detail::tableGeneratorMSB(polynomial, len);
+    constexpr static auto crc_table = crcDetail::tableGeneratorMSB(polynomial, len);
 
  public:
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
         auto tableIndex = [](ChecksumType remainder, uint8_t newData) {
             if constexpr (reflectIn) {
-                newData = detail::reverseBits(newData);
+                newData = crcDetail::reverseBits(newData);
             }
             if constexpr (len <= 8) {
                 const uint_fast8_t index = newData ^ remainder;
@@ -343,7 +343,7 @@ class CRCImpl<Implementation::Table256, ChecksumType, polynomial, len, reflectIn
 
  private:
     enum : ChecksumType {
-        Mask = detail::maskGen<ChecksumType>(len),
+        Mask = crcDetail::maskGen<ChecksumType>(len),
         ShiftToAlign8Bit = ((sizeof(ChecksumType) * 8 - len) % 8),
     };
 };
@@ -354,14 +354,14 @@ template <typename ChecksumType, ChecksumType polynomial, size_t len, bool refle
 class CRCImpl<Implementation::Table256Lsb, ChecksumType, polynomial, len, reflectIn> {
     static_assert(std::numeric_limits<ChecksumType>::digits >= len);
 
-    constexpr static auto crc_table = detail::tableGeneratorLSB(
-        detail::reverseBits(ChecksumType(polynomial << ((sizeof(ChecksumType) * 8 - len) % 8))), len);
+    constexpr static auto crc_table = crcDetail::tableGeneratorLSB(
+        crcDetail::reverseBits(ChecksumType(polynomial << ((sizeof(ChecksumType) * 8 - len) % 8))), len);
 
  public:
     static constexpr ChecksumType calculatePartial(ChecksumType init, const uint8_t *data, size_t lne) {
         auto tableIndex = [](ChecksumType remainder, uint8_t newData) {
             if constexpr (!reflectIn) {
-                newData = detail::reverseBits(newData);
+                newData = crcDetail::reverseBits(newData);
             }
             const uint_fast8_t index = newData ^ (remainder & 0xFFU);
             return index;
@@ -377,12 +377,12 @@ class CRCImpl<Implementation::Table256Lsb, ChecksumType, polynomial, len, reflec
 
  private:
     enum : ChecksumType {
-        Mask = detail::maskGen<ChecksumType>(len),
+        Mask = crcDetail::maskGen<ChecksumType>(len),
         ShiftToAlign8Bit = ((sizeof(ChecksumType) * 8 - len) % 8),
     };
 };
 
-template <Implementation implementation, typename ChecksumType, detail::Polynomial poly, ChecksumType initial = 0,
+template <Implementation implementation, typename ChecksumType, crcDetail::Polynomial poly, ChecksumType initial = 0,
           ChecksumType xorOut = 0, Properties properties = Properties::None>
 class CRC : public CRCImpl<implementation, ChecksumType, poly.polynomial, poly.length,
                            (properties & Properties::ReflectIn) == Properties::ReflectIn> {
@@ -403,13 +403,13 @@ class CRC : public CRCImpl<implementation, ChecksumType, poly.polynomial, poly.l
         if constexpr (isMsbImplementation()) {
             return initial;
         } else {
-            return detail::reverseBits(initial);
+            return crcDetail::reverseBits(initial);
         }
     }
 
     static constexpr ChecksumType finalize(ChecksumType remainder) {
         if constexpr (outputReflected() == isMsbImplementation()) {
-            remainder = detail::reverseBits(remainder) >> ShiftToAlign8Bit;
+            remainder = crcDetail::reverseBits(remainder) >> ShiftToAlign8Bit;
         }
 
         return remainder ^ xorOut;

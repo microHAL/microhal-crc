@@ -36,15 +36,15 @@ constexpr auto implementation = Implementation::CRC_IMPLEMENTATION;
 TEST_CASE("CRC7 'x^7 + X^3 + 1' used in SD Card") {
     {
         uint8_t data[5] = {0b0100'0000, 0x00, 0x00, 0x00, 0x00};
-        CHECK(CRC7<implementation>::calculate(data, sizeof(data)) == 0b100'1010);
+        CHECK(CRC7<implementation>::calculate(data) == 0b100'1010);
     }
     {
         uint8_t data[5] = {0b0101'0001, 0x00, 0x00, 0x00, 0x00};
-        CHECK(CRC7<implementation>::calculate(data, sizeof(data)) == 0b010'1010);
+        CHECK(CRC7<implementation>::calculate(data) == 0b010'1010);
     }
     {
         uint8_t data[5] = {0b0001'0001, 0x00, 0x00, 0x09, 0x00};
-        CHECK(CRC7<implementation>::calculate(data, sizeof(data)) == 0b011'0011);
+        CHECK(CRC7<implementation>::calculate(data) == 0b011'0011);
     }
 }
 
@@ -52,7 +52,7 @@ TEST_CASE("CRC16 'x^16 + x^12 + x^5 + 1' used in SD Card") {
     {
         std::array<uint8_t, 512> data;
         data.fill(0xFF);
-        uint16_t crc_calculated = CRC16_XMODEM<implementation>::calculate(data.data(), data.size());
+        uint16_t crc_calculated = CRC16_XMODEM<implementation>::calculate(data);
         CHECK(crc_calculated == 0x7FA1);
     }
 }

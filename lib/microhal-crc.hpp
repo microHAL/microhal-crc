@@ -31,9 +31,9 @@
 
 #include <algorithm>
 #include <array>
-#include <charconv>
 #include <cstdint>
 #include <limits>
+#include <span>
 
 #undef CRC
 
@@ -386,6 +386,9 @@ template <Implementation implementation, typename ChecksumType, crcDetail::Polyn
           ChecksumType xorOut = 0, Properties properties = Properties::None>
 class CRC : public crcDetail::CRCImpl<implementation, ChecksumType, poly.polynomial, poly.length,
                                       (properties & Properties::ReflectIn) == Properties::ReflectIn> {
+    using Base = crcDetail::CRCImpl<implementation, ChecksumType, poly.polynomial, poly.length,
+                                    (properties & Properties::ReflectIn) == Properties::ReflectIn>;
+    static_assert(poly.length > 0, "Incorrect polynomial string format.");
     static_assert(std::numeric_limits<ChecksumType>::digits >= poly.length);
 
     static constexpr bool isMsbImplementation() {
@@ -418,6 +421,17 @@ class CRC : public crcDetail::CRCImpl<implementation, ChecksumType, poly.polynom
     static constexpr ChecksumType calculate(const uint8_t *data, size_t lne) {
         ChecksumType remainder = CRC::calculatePartial(initialize(), data, lne);
         return finalize(remainder);
+    }
+
+    static constexpr ChecksumType calculate(std::span<const uint8_t> data) {
+        ChecksumType remainder = CRC::calculatePartial(initialize(), data.data(), data.size());
+        return finalize(remainder);
+    }
+
+    using Base::calculatePartial;
+
+    static constexpr ChecksumType calculatePartial(ChecksumType init, const std::span<const uint8_t> data) {
+        return CRC::calculatePartial(init, data.data(), data.size());
     }
 
  private:

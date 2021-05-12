@@ -39,6 +39,17 @@
 
 namespace microhal {
 
+enum class Implementation { BitShift, BitShiftLsb, Table256, Table256Lsb };
+enum class Properties { ReflectIn = 0b01, ReflectOut = 0b10, None = 0 };
+
+constexpr Properties operator|(Properties a, Properties b) {
+    return static_cast<Properties>(static_cast<uint_fast8_t>(a) | static_cast<uint_fast8_t>(b));
+}
+
+constexpr Properties operator&(Properties a, Properties b) {
+    return static_cast<Properties>(static_cast<uint_fast8_t>(a) & static_cast<uint_fast8_t>(b));
+}
+
 namespace crcDetail {
 template <typename ChecksumType>
 static constexpr ChecksumType maskGen(size_t len) {
@@ -202,19 +213,6 @@ struct Polynomial {
     const uint64_t polynomial;
     const uint_fast16_t length;
 };
-
-}  // namespace detail
-
-enum class Implementation { BitShift, BitShiftLsb, Table256, Table256Lsb };
-enum class Properties { ReflectIn = 0b01, ReflectOut = 0b10, None = 0 };
-
-constexpr Properties operator|(Properties a, Properties b) {
-    return static_cast<Properties>(static_cast<uint_fast8_t>(a) | static_cast<uint_fast8_t>(b));
-}
-
-constexpr Properties operator&(Properties a, Properties b) {
-    return static_cast<Properties>(static_cast<uint_fast8_t>(a) & static_cast<uint_fast8_t>(b));
-}
 
 template <Implementation impl, typename ChecksumType, ChecksumType polynomial, size_t len, bool reflectIn>
 class CRCImpl;
@@ -382,10 +380,12 @@ class CRCImpl<Implementation::Table256Lsb, ChecksumType, polynomial, len, reflec
     };
 };
 
+}  // namespace crcDetail
+
 template <Implementation implementation, typename ChecksumType, crcDetail::Polynomial poly, ChecksumType initial = 0,
           ChecksumType xorOut = 0, Properties properties = Properties::None>
-class CRC : public CRCImpl<implementation, ChecksumType, poly.polynomial, poly.length,
-                           (properties & Properties::ReflectIn) == Properties::ReflectIn> {
+class CRC : public crcDetail::CRCImpl<implementation, ChecksumType, poly.polynomial, poly.length,
+                                      (properties & Properties::ReflectIn) == Properties::ReflectIn> {
     static_assert(std::numeric_limits<ChecksumType>::digits >= poly.length);
 
     static constexpr bool isMsbImplementation() {
